@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# Post-merge hook to log merges into the main branch
+# This hook logs merge information when a merge is completed into main/master
+
+# Get the current branch name
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Check if we're on main or master branch
+if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+    # Get merge information
+    MERGE_COMMIT=$(git rev-parse HEAD)
+    MERGE_MESSAGE=$(git log -1 --pretty=format:"%s" HEAD)
+    MERGE_AUTHOR=$(git log -1 --pretty=format:"%an <%ae>" HEAD)
+    MERGE_DATE=$(git log -1 --pretty=format:"%ad" --date=iso HEAD)
+    MERGED_BRANCH=$(git log -1 --pretty=format:"%P" HEAD | cut -d' ' -f2)
+    
+    # Create log directory if it doesn't exist
+    LOG_DIR="$GIT_DIR/../merge-logs"
+    mkdir -p "$LOG_DIR"
+    
+    # Log file path
+    LOG_FILE="$LOG_DIR/merge-$(date +%Y%m%d-%H%M%S).log"
+    
+    # Write merge information to log file
+    {
+        echo "========================================="
+        echo "Merge Log Entry"
+        echo "========================================="
+        echo "Branch: $CURRENT_BRANCH"
+        echo "Merge Commit: $MERGE_COMMIT"
+        echo "Merge Message: $MERGE_MESSAGE"
+        echo "Author: $MERGE_AUTHOR"
+        echo "Date: $MERGE_DATE"
+        echo "Merged Branch: $MERGED_BRANCH"
+        echo "========================================="
+        echo ""
+    } >> "$LOG_FILE"
+    
+    echo "Merge logged to: $LOG_FILE"
+fi
+
+exit 0
+

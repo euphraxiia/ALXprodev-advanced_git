@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# Pre-commit hook to check if each directory has a README file
+# This hook verifies that every directory in the repository contains a README file
+
+# Redirect output to stderr
+exec 1>&2
+
+# Get the root directory of the repository
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Find all directories in the repository (excluding .git)
+find "$REPO_ROOT" -type d -not -path '*/\.git/*' -not -path '*/\.git' | while read -r dir; do
+    # Skip the root directory itself
+    if [ "$dir" = "$REPO_ROOT" ]; then
+        continue
+    fi
+    
+    # Check if directory has any README file (README, README.md, README.txt, etc.)
+    has_readme=false
+    for readme_file in "$dir"/README*; do
+        if [ -f "$readme_file" ]; then
+            has_readme=true
+            break
+        fi
+    done
+    
+    # If no README found, report error
+    if [ "$has_readme" = false ]; then
+        # Get relative path from repo root
+        rel_path="${dir#$REPO_ROOT/}"
+        echo "Error: Directory '$rel_path' is missing a README file."
+        echo "Please add a README.md file to this directory before committing."
+        exit 1
+    fi
+done
+
+# If we get here, all directories have README files
+exit 0
+
